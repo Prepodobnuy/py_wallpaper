@@ -212,7 +212,7 @@ Lets take a look:
     {
       "template_path": "~/path/to/template/alacritty.toml",    
       "config_path": "~/.config/alacritty/alacritty.toml",
-      "use_quotes": 0,
+      "use_quotes": 1,
       "use_sharps": 1,
       "opacity": 0,
       "command": ""    
