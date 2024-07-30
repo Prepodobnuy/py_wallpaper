@@ -196,7 +196,7 @@ def read_displays() -> list[Display]:
             width=display["width"],
             height=display["height"],
             margin_x=display["margin-left"],
-            margin_y=display["margin-right"],
+            margin_y=display["margin-top"],
         )
         res.append(tmp)
 
