@@ -15,7 +15,7 @@ Wayland
 ```bash
 swww
 ```
-
+## Installation
 ```bash
 git clone https://github.com/Prepodobnuy/py_wallpaper.git
 cd py_wallpaper
