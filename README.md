@@ -203,5 +203,28 @@ style = "Regular"
 x = 2
 y = 2
 ```
-As you can see py_wallpaper changed (color$) to actual colors sigma sigma kaisenat
+As you can see py_wallpaper changed color variables to actual colors.
+To make this software reads file templates.json.
+Lets take a look:
+```json
+{
+  "templates": [
+    {
+      "template_path": "~/path/to/template/alacritty.toml",    
+      "config_path": "~/.config/alacritty/alacritty.toml",
+      "use_quotes": 0,
+      "use_sharps": 1,
+      "opacity": 0,
+      "command": ""    
+    }
+  ]
+}
+```
+"template_path" is a path to template file
+"config_path" is a path to config file
+"use_quotes" is a 0/1 variable wich is wraps your color with ": 000000 -> "000000"
+"use_sharps" is a 0/1 variable wich is adds # before your color: 000000 -> #000000
+"opacity" is a 0/ff variable wich is adds value after your color: 000000 -> 000000ff
+if "opacity" is setted to 0 it would not add any value.
+"command" is a shell commands wich would start after template is executed
 glhf
