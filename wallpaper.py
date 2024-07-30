@@ -66,7 +66,7 @@ class Config(object):
             return None
     
     def read_args(self) -> None:
-        runcount = -1
+        once = False
         if in_args(["-wd", "--wallpaper-dir"]):          self.wallpapers_dir        = get_value_from_args(["-wd", "--wallpaper-dir"])
         if in_args(["-cwd", "--cached-wallpaper-dir"]):  self.cached_wallpapers_dir = get_value_from_args(["-cwd", "--cached-wallpaper-dir"])
         if in_args(["-pcd", "--pywal-colors-dir"]):      self.wal_colors_dir        = get_value_from_args(["-pcd", "--pywal-colors-dir"])
@@ -82,13 +82,13 @@ class Config(object):
                 cache_wallpaper(wallpaper_name=wallpaper_name, wallpaper_path=f'{self.wallpapers_dir}/{wallpaper_name}')
                 sys.exit(1)
         if in_args(["--once"]):
-            runcount = 1
+            once = True
         wallpaper_name = random.choice(os.listdir(self.wallpapers_dir))
         if in_args(["-r", "--rofi"]):
             wallpaper_name = runrofi(os.listdir(self.wallpapers_dir))
-            runcount = 1
+            once = True
 
-        self.runcount = runcount
+        self.once = once
         self.wallpaper_name = wallpaper_name
 
 
@@ -307,14 +307,11 @@ def set_wallpapper(wallpaper_path:str, wallpaper_name:str) -> None:
         if xorg: break
     
 
-def main(wallpaper_name: str, runcount: int) -> None:
-    iteration = 0
+def main(wallpaper_name: str, once: bool) -> None:
     prev_wallpaper_name = None
 
-    try:
-        while iteration != runcount:
-            if iteration > 0:
-                time.sleep(CONFIG.sleep_time)
+    try: 
+        while True:
             while wallpaper_name == prev_wallpaper_name:
                 wallpaper_name = random.choice(os.listdir(CONFIG.wallpapers_dir))
             prev_wallpaper_name = wallpaper_name
@@ -326,13 +323,13 @@ def main(wallpaper_name: str, runcount: int) -> None:
             cache_wallpaper(wallpaper_path, wallpaper_name)
             set_wallpapper(wallpaper_path, wallpaper_name)
 
-            iteration += 1
-
-    except KeyboardInterrupt:
+            if once: break
+            time.sleep(CONFIG.sleep_time)
+        
         sys.exit(1)
-    except Exception as e:
-        print(e)
+
+    except KeyboardInterrupt: sys.exit(1)
 
 
 if __name__ == "__main__":
-    main(wallpaper_name=CONFIG.wallpaper_name, runcount=CONFIG.runcount)
+    main(wallpaper_name=CONFIG.wallpaper_name, once=CONFIG.once)
