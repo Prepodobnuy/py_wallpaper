@@ -35,7 +35,7 @@ def get_value_from_args(params: list[str]) -> str | None:
 
 class Config(object):
     def __init__(self) -> None:
-        self.config_path = f'{HOME}/py_wallpaper/config.json'
+        self.config_path = f'{HOME}/.config/py_wallpaper/config.json'
         if in_args(["-c", "--conf"]): self.config_path = get_value_from_args(["-c", "--conf"])
         with open(self.config_path) as file:
             self.config_data = json.loads(file.read())
