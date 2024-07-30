@@ -1,19 +1,19 @@
 ## Dependencies:
-### Primary
+Primary
 ```bash
 pywal 
 ```
-### Xorg
+Secondary
+```bash
+rofi
+```
+Xorg
 ```bash
 feh 
 ```
-### Wayland
+Wayland
 ```bash
 swww
-```
-### Secondary
-```bash
-rofi
 ```
 
 ```bash
