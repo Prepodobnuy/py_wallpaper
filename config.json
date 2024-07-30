@@ -15,7 +15,7 @@
       "margin-top": 0
     }
   ],
-  "colors_variables": [
+  "color_variables": [
     {
       "name": "(color0)",
       "value": 0
@@ -91,14 +91,14 @@
   ],
   "wallpapers_dir": "$(HOME)/Documents/Wallpapers",
   "cached_wallpapers_dir": "$(HOME)/Documents/CachedWallpapers",
-  "wal_colors_dir": "$(HOME)/.cache/wal/colors",
   "template_config": "$(HOME)/.config/py_wallpaper/templates.json",
-  "wal_backend": "colorz",
+  "wal_colors_dir": "$(HOME)/.cache/wal/colors",
+  "wal_backend": "wal",
+  "use_pywal": true,
   "wal_bg_color": "",
   "swww_params": "--transition-fps 165 --transition-step 10 --transition-duration 2 -f Nearest -t any",
   "sleep_time": 36000,
   "light_theme": false,
   "resize_displays": false,
-  "apply_templates": true,
-  "use_pywal": true
+  "apply_templates": true
 }

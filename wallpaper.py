@@ -13,15 +13,36 @@ HOME = os.getenv("HOME")
 DEBUG = False
 
 
+def runrofi(wallpapers) -> list[str]:
+    result = subprocess.run(
+        ["rofi", "-dmenu", "-p"],
+        input="\n".join(wallpapers).encode(),
+        stdout=subprocess.PIPE,
+    )
+    return result.stdout.decode()
+
+def in_args(params: list[str]) -> bool:
+    for param in params:
+        if param in sys.argv:
+            return True
+    return False
+
+def get_value_from_args(params: list[str]) -> str | None:
+    for param in params:
+        if param in sys.argv:
+            return sys.argv[sys.argv.index(param) + 1]
+    return None
+
 class Config(object):
     def __init__(self) -> None:
-        config_path = f'{HOME}/py_wallpaper/config.json'
-        with open(config_path) as file:
+        self.config_path = f'{HOME}/py_wallpaper/config.json'
+        if in_args(["-c", "--conf"]): self.config_path = get_value_from_args(["-c", "--conf"])
+        with open(self.config_path) as file:
             self.config_data = json.loads(file.read())
 
         self.raw_displays_params: dict = self.try_to_set("displays")
 
-        self.colors_variables: list[dict] = self.try_to_set("colors_variables")
+        self.color_variables: list[dict] = self.try_to_set("color_variables")
 
         self.wallpapers_dir: str = f"{HOME}".join(self.try_to_set("wallpapers_dir").split("$(HOME)"))
         self.cached_wallpapers_dir: str = f"{HOME}".join(self.try_to_set("cached_wallpapers_dir").split("$(HOME)"))
@@ -36,56 +57,26 @@ class Config(object):
         self.apply_templates: bool = self.try_to_set("apply_templates")
         self.use_pywal: bool = self.try_to_set("use_pywal")
 
+        self.read_args()
+
     def try_to_set(self, param: str) -> any:
         try:
             return self.config_data[param]
         except Exception as e:
             return None
-
+    
     def read_args(self) -> None:
-        def runrofi(wallpapers) -> list[str]:
-            result = subprocess.run(
-                ["rofi", "-dmenu", "-p"],
-                input="\n".join(wallpapers).encode(),
-                stdout=subprocess.PIPE,
-            )
-            return result.stdout.decode()
-
-        def in_args(params: list[str]) -> bool:
-            for param in params:
-                if param in sys.argv:
-                    return True
-            return False
-
-        def get_value_from_args(params: list[str]) -> str | None:
-            for param in params:
-                if param in sys.argv:
-                    return sys.argv[sys.argv.index(param) + 1]
-            return None
-
         runcount = -1
-        if in_args(["-wd", "--wallpaper-dir"]):
-            self.wallpapers_dir = get_value_from_args(["-wd", "--wallpaper-dir"])
-        if in_args(["-cwd", "--cached-wallpaper-dir"]):
-            self.cached_wallpapers_dir = get_value_from_args(
-                ["-cwd", "--cached-wallpaper-dir"]
-            )
-        if in_args(["-pcd", "--pywal-colors-dir"]):
-            self.wal_colors_dir = get_value_from_args(["-pcd", "--pywal-colors-dir"])
-        if in_args(["-c", "--conf"]):
-            self.template_config_dir = get_value_from_args(["-c", "--conf"])
-        if in_args(["-pb", "--pywal-backend"]):
-            self.wal_backend = get_value_from_args(["-pb", "--pywal-backend"])
-        if in_args(["-pbc", "--pywal-backgroundcolor"]):
-            self.wal_bg_color = get_value_from_args(["-pbc", "--pywal-backgroundcolor"])
-        if in_args(["--swww"]):
-            self.swww_params = get_value_from_args(["--swww"])
-        if in_args(["-s", "--sleep-time"]):
-            self.sleep_time = int(get_value_from_args(["-s", "--sleep-time"]))
-        if in_args(["-l", "--light"]):
-            self.light_theme = True
-        if in_args(["--resize-displays"]):
-            self.resize_displays = True
+        if in_args(["-wd", "--wallpaper-dir"]):          self.wallpapers_dir        = get_value_from_args(["-wd", "--wallpaper-dir"])
+        if in_args(["-cwd", "--cached-wallpaper-dir"]):  self.cached_wallpapers_dir = get_value_from_args(["-cwd", "--cached-wallpaper-dir"])
+        if in_args(["-pcd", "--pywal-colors-dir"]):      self.wal_colors_dir        = get_value_from_args(["-pcd", "--pywal-colors-dir"])
+        if in_args(["-t", "--temp"]):                    self.template_config_dir   = get_value_from_args(["-t", "--temp"])
+        if in_args(["-pb", "--pywal-backend"]):          self.wal_backend           = get_value_from_args(["-pb", "--pywal-backend"])
+        if in_args(["-pbc", "--pywal-backgroundcolor"]): self.wal_bg_color          = get_value_from_args(["-pbc", "--pywal-backgroundcolor"])
+        if in_args(["--swww"]):                          self.swww_params           = get_value_from_args(["--swww"])
+        if in_args(["-s", "--sleep-time"]):              self.sleep_time            = int(get_value_from_args(["-s", "--sleep-time"]))
+        if in_args(["-l", "--light"]):                   self.light_theme           = True
+        if in_args(["--resize-displays"]):               self.resize_displays       = True
         if in_args(["--cache-all"]):
             for wallpaper_name in os.listdir(self.wallpapers_dir):
                 cache_wallpaper(wallpaper_name=wallpaper_name, wallpaper_path=f'{self.wallpapers_dir}/{wallpaper_name}')
@@ -97,7 +88,8 @@ class Config(object):
             wallpaper_name = runrofi(os.listdir(self.wallpapers_dir))
             runcount = 1
 
-        return runcount, wallpaper_name
+        self.runcount = runcount
+        self.wallpaper_name = wallpaper_name
 
 
 CONFIG = Config()
@@ -135,7 +127,7 @@ class Template(object):
         self.opacity:str = opacity
 
     def apply(self, colors: list[str]) -> None:
-        variables = CONFIG.colors_variables
+        variables = CONFIG.color_variables
 
         with open(self.templatefilepath, "r") as template:
             data = template.read()
@@ -323,7 +315,7 @@ def set_wallpapper(wallpaper_path:str) -> None:
             break
     
 
-def main(wallpaper_name: str, runcount: int = -1) -> None:
+def main(wallpaper_name: str, runcount: int) -> None:
     iteration = 0
     prev_wallpaper_name = None
 
@@ -349,5 +341,4 @@ def main(wallpaper_name: str, runcount: int = -1) -> None:
 
 
 if __name__ == "__main__":
-    runcount, wallpaper_name = CONFIG.read_args()
-    main(wallpaper_name=wallpaper_name, runcount=runcount)
+    main(wallpaper_name=CONFIG.wallpaper_name, runcount=CONFIG.runcount)
