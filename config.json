@@ -12,7 +12,7 @@
       "width": 1080,
       "height": 1920,
       "margin-left": 0,
-      "margin-right": 0
+      "margin-top": 0
     }
   ],
   "colors_variables": [
@@ -98,5 +98,7 @@
   "swww_params": "--transition-fps 165 --transition-step 10 --transition-duration 2 -f Nearest -t any",
   "sleep_time": 36000,
   "light_theme": false,
-  "resize_displays": false
+  "resize_displays": false,
+  "apply_templates": true,
+  "use_pywal": true
 }

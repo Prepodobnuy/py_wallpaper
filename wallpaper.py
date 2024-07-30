@@ -15,7 +15,7 @@ DEBUG = False
 
 class Config(object):
     def __init__(self) -> None:
-        config_path = f'{HOME}/.config/py_wallpaper/config.json'
+        config_path = f'{HOME}/py_wallpaper/config.json'
         with open(config_path) as file:
             self.config_data = json.loads(file.read())
 
@@ -23,24 +23,18 @@ class Config(object):
 
         self.colors_variables: list[dict] = self.try_to_set("colors_variables")
 
-        self.wallpapers_dir: str = f"{HOME}".join(
-            self.try_to_set("wallpapers_dir").split("$(HOME)")
-        )
-        self.cached_wallpapers_dir: str = f"{HOME}".join(
-            self.try_to_set("cached_wallpapers_dir").split("$(HOME)")
-        )
-        self.wal_colors_dir: str = f"{HOME}".join(
-            self.try_to_set("wal_colors_dir").split("$(HOME)")
-        )
-        self.template_config_dir: str = f"{HOME}".join(
-            self.try_to_set("template_config").split("$(HOME)")
-        )
+        self.wallpapers_dir: str = f"{HOME}".join(self.try_to_set("wallpapers_dir").split("$(HOME)"))
+        self.cached_wallpapers_dir: str = f"{HOME}".join(self.try_to_set("cached_wallpapers_dir").split("$(HOME)"))
+        self.wal_colors_dir: str = f"{HOME}".join(self.try_to_set("wal_colors_dir").split("$(HOME)"))
+        self.template_config_dir: str = f"{HOME}".join(self.try_to_set("template_config").split("$(HOME)"))
         self.wal_backend: str = self.try_to_set("wal_backend")
         self.wal_bg_color: str = self.try_to_set("wal_bg_color")
         self.swww_params: str = self.try_to_set("swww_params")
         self.sleep_time: int = self.try_to_set("sleep_time")
         self.light_theme: bool = self.try_to_set("light_theme")
         self.resize_displays: bool = self.try_to_set("resize_displays")
+        self.apply_templates: bool = self.try_to_set("apply_templates")
+        self.use_pywal: bool = self.try_to_set("use_pywal")
 
     def try_to_set(self, param: str) -> any:
         try:
@@ -93,16 +87,17 @@ class Config(object):
         if in_args(["--resize-displays"]):
             self.resize_displays = True
         if in_args(["--cache-all"]):
-            for wallpaper in os.listdir(self.wallpapers_dir):
-                cache_wallpaper(wallpaper_name=wallpaper)
+            for wallpaper_name in os.listdir(self.wallpapers_dir):
+                cache_wallpaper(wallpaper_name=wallpaper_name, wallpaper_path=f'{self.wallpapers_dir}/{wallpaper_name}')
+                sys.exit(1)
         if in_args(["--once"]):
             runcount = 1
-        wallpaperName = random.choice(os.listdir(self.wallpapers_dir))
+        wallpaper_name = random.choice(os.listdir(self.wallpapers_dir))
         if in_args(["-r", "--rofi"]):
-            wallpaperName = runrofi(os.listdir(self.wallpapers_dir))
+            wallpaper_name = runrofi(os.listdir(self.wallpapers_dir))
             runcount = 1
 
-        return runcount, wallpaperName
+        return runcount, wallpaper_name
 
 
 CONFIG = Config()
@@ -260,28 +255,18 @@ def split_wallpaper(displays: list[Display], image: Image) -> list[Display]:
     return displays
 
 
-def cache_wallpaper(wallpaper_name: str) -> None:
-    wallpaper_name = (
-        wallpaper_name.split("/")[-1] if "/" in wallpaper_name else wallpaper_name
-    )
-    wallpaper_name = (
-        wallpaper_name.split("\n")[0] if "\n" in wallpaper_name else wallpaper_name
-    )
-
+def cache_wallpaper(wallpaper_path:str, wallpaper_name:str) -> None:
     cache_is_needed = False
 
     for display in read_displays():
-        if not os.path.exists(
-            f'{CONFIG.cached_wallpapers_dir}/{display.name}-{display.w}.{display.h}.{display.x}.{display.y}{wallpaper_name.split('.')[0]}.png'
-        ):
+        if not os.path.exists(f'{CONFIG.cached_wallpapers_dir}/{display.name}-{display.w}.{display.h}.{display.x}.{display.y}{wallpaper_name.split('.')[0]}.png'):
             cache_is_needed = True
             break
 
-    if not cache_is_needed:
-        return
+    if not cache_is_needed: return
 
     displays: list[Display] = read_displays()
-    image: Image = Image.open(f"{CONFIG.wallpapers_dir}/{wallpaper_name}")
+    image: Image = Image.open(wallpaper_path)
 
     if CONFIG.resize_displays:
         displays = resize_displays(displays, image)
@@ -298,34 +283,8 @@ def cache_wallpaper(wallpaper_name: str) -> None:
         )
 
 
-def set_wallpapper(wallpaper_name: str) -> None:
-    displays: list[Display] = read_displays()
+def apply_templates() -> None:
     templates: list[Template] = read_templates()
-    wallpaper_name: str = f"{CONFIG.wallpapers_dir}/{wallpaper_name}"
-
-    if "\n" in wallpaper_name:
-        wallpaper_name = wallpaper_name[::-1][1::][::-1]
-    pywal_command: str = f"python -m pywal -n -e -q {'-l' if CONFIG.light_theme else ''} {"-b " + CONFIG.wal_bg_color if CONFIG.wal_bg_color else ""} -i {wallpaper_name} --backend {CONFIG.wal_backend} "
-
-    os.system(pywal_command)
-
-    for display in displays:
-        xorg = False
-
-        try:
-            if "wayland" in os.environ["XDG_BACKEND"]:
-                os.system(
-                    f"swww img {CONFIG.cached_wallpapers_dir}/{display.name}-{display.w}.{display.h}.{display.x}.{display.y}{wallpaperName.split('.')[0]}.png -o {display.name} {CONFIG.swww_params}"
-                )
-
-        except Exception as e:
-            os.system(
-                f"feh --bg-fill {CONFIG.wallpapers_dir}/{wallpaperName} --no-xinerama"
-            )
-            xorg = True
-
-        if xorg:
-            break
 
     with open(f"{CONFIG.wal_colors_dir}") as file:
         colors = (file.read()).split("\n")
@@ -334,20 +293,54 @@ def set_wallpapper(wallpaper_name: str) -> None:
         template.apply(colors)
 
 
-def main(wallpaperName: str, runcount: int = -1) -> None:
+def change_colors(wallpaper_path:str) -> None:
+    if "\n" in wallpaper_path:
+        wallpaper_path = wallpaper_path[::-1][1::][::-1]
+    pywal_command: str = f"python -m pywal -n -e -q {'-l' if CONFIG.light_theme else ''} {"-b " + CONFIG.wal_bg_color if CONFIG.wal_bg_color else ""} -i {wallpaper_path} --backend {CONFIG.wal_backend} "
+
+    os.system(pywal_command)
+
+
+def set_wallpapper(wallpaper_path:str) -> None:
+    displays: list[Display] = read_displays()
+
+    for display in displays:
+        xorg = False
+
+        try:
+            if "wayland" in os.environ["XDG_BACKEND"]:
+                os.system(
+                    f"swww img {CONFIG.cached_wallpapers_dir}/{display.name}-{display.w}.{display.h}.{display.x}.{display.y}{wallpaper_path.split('.')[0]}.png -o {display.name} {CONFIG.swww_params}"
+                )
+
+        except Exception as e:
+            os.system(
+                f"feh --bg-fill {CONFIG.wallpapers_dir}/{wallpaper_path} --no-xinerama"
+            )
+            xorg = True
+
+        if xorg:
+            break
+    
+
+def main(wallpaper_name: str, runcount: int = -1) -> None:
     iteration = 0
-    prev_wallpaper = None
+    prev_wallpaper_name = None
 
     try:
         while iteration != runcount:
             if iteration > 0:
                 time.sleep(CONFIG.sleep_time)
-            while wallpaperName == prev_wallpaper:
-                wallpaperName = random.choice(os.listdir(CONFIG.wallpapers_dir))
-            prev_wallpaper = wallpaperName
+            while wallpaper_name == prev_wallpaper_name:
+                wallpaper_name = random.choice(os.listdir(CONFIG.wallpapers_dir))
+            prev_wallpaper_name = wallpaper_name
 
-            cache_wallpaper(wallpaperName)
-            set_wallpapper(wallpaperName)
+            wallpaper_path:str = f"{CONFIG.wallpapers_dir}/{wallpaper_name}"
+
+            if CONFIG.use_pywal: change_colors(wallpaper_path)
+            if CONFIG.apply_templates: apply_templates()
+            cache_wallpaper(wallpaper_path, wallpaper_name)
+            set_wallpapper(wallpaper_path)
 
             iteration += 1
 
@@ -356,5 +349,5 @@ def main(wallpaperName: str, runcount: int = -1) -> None:
 
 
 if __name__ == "__main__":
-    runcount, wallpaperName = CONFIG.read_args()
-    main(wallpaperName=wallpaperName, runcount=runcount)
+    runcount, wallpaper_name = CONFIG.read_args()
+    main(wallpaper_name=wallpaper_name, runcount=runcount)

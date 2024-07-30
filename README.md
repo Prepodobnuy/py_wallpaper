@@ -45,7 +45,7 @@ Insert your displays in config like this:
   "margin-top": YOUR DISPLAY SPACING FROM THE TOP
 }
 ```
-To view all of your monitor on hyprland use
+To view all of your monitor on hyprland use:
 ```bash
 hyprctl monitors all
 ```
