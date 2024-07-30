@@ -293,26 +293,22 @@ def change_colors(wallpaper_path:str) -> None:
     os.system(pywal_command)
 
 
-def set_wallpapper(wallpaper_path:str) -> None:
+def set_wallpapper(wallpaper_path:str, wallpaper_name:str) -> None:
     displays: list[Display] = read_displays()
 
     for display in displays:
         xorg = False
 
         try:
-            if "wayland" in os.environ["XDG_BACKEND"]:
-                os.system(
-                    f"swww img {CONFIG.cached_wallpapers_dir}/{display.name}-{display.w}.{display.h}.{display.x}.{display.y}{wallpaper_path.split('.')[0]}.png -o {display.name} {CONFIG.swww_params}"
-                )
+            print("TRYYY")
+            print(f"swww img {CONFIG.cached_wallpapers_dir}/{display.name}-{display.w}.{display.h}.{display.x}.{display.y}{wallpaper_name.split('.')[0]}.png -o {display.name} {CONFIG.swww_params}")
+            os.system(f"swww img {CONFIG.cached_wallpapers_dir}/{display.name}-{display.w}.{display.h}.{display.x}.{display.y}{wallpaper_name.split('.')[0]}.png -o {display.name} {CONFIG.swww_params}")
 
         except Exception as e:
-            os.system(
-                f"feh --bg-fill {CONFIG.wallpapers_dir}/{wallpaper_path} --no-xinerama"
-            )
+            os.system(f"feh --bg-fill {wallpaper_path} --no-xinerama")
             xorg = True
 
-        if xorg:
-            break
+        if xorg: break
     
 
 def main(wallpaper_name: str, runcount: int) -> None:
@@ -332,12 +328,14 @@ def main(wallpaper_name: str, runcount: int) -> None:
             if CONFIG.use_pywal: change_colors(wallpaper_path)
             if CONFIG.apply_templates: apply_templates()
             cache_wallpaper(wallpaper_path, wallpaper_name)
-            set_wallpapper(wallpaper_path)
+            set_wallpapper(wallpaper_path, wallpaper_name)
 
             iteration += 1
 
     except KeyboardInterrupt:
         sys.exit(1)
+    except Exception as e:
+        print(e)
 
 
 if __name__ == "__main__":
