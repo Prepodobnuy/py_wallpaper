@@ -221,7 +221,8 @@ Lets take a look:
 }
 ```
 - "template_path" is a path to template file 
-- "config_path" is a path to config file "use_quotes" is a 0/1 variable wich is wraps your color with ": 000000 -> "000000" 
+- "config_path" is a path to config file
+- "use_quotes" is a 0/1 variable wich is wraps your color with ": 000000 -> "000000" 
 - "use_sharps" is a 0/1 variable wich is adds # before your color: 000000 -> #000000 
 - "opacity" is a 0/ff variable wich is adds value after your color: 000000 -> 000000ff if "opacity" is setted to 0 it would not add any value. 
 - "command" is a shell commands wich would start after template is executed 
