@@ -299,12 +299,8 @@ def set_wallpapper(wallpaper_path:str, wallpaper_name:str) -> None:
     for display in displays:
         xorg = False
 
-        try:
-            print("TRYYY")
-            print(f"swww img {CONFIG.cached_wallpapers_dir}/{display.name}-{display.w}.{display.h}.{display.x}.{display.y}{wallpaper_name.split('.')[0]}.png -o {display.name} {CONFIG.swww_params}")
-            os.system(f"swww img {CONFIG.cached_wallpapers_dir}/{display.name}-{display.w}.{display.h}.{display.x}.{display.y}{wallpaper_name.split('.')[0]}.png -o {display.name} {CONFIG.swww_params}")
-
-        except Exception as e:
+        try: os.system(f"swww img {CONFIG.cached_wallpapers_dir}/{display.name}-{display.w}.{display.h}.{display.x}.{display.y}{wallpaper_name.split('.')[0]}.png -o {display.name} {CONFIG.swww_params}")
+        except Exception:
             os.system(f"feh --bg-fill {wallpaper_path} --no-xinerama")
             xorg = True
 
