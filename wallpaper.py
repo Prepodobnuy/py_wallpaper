@@ -33,38 +33,57 @@ def get_value_from_args(params: list[str]) -> str | None:
             return sys.argv[sys.argv.index(param) + 1]
     return None
 
+
 class Config(object):
     def __init__(self) -> None:
-        self.config_path = f'{HOME}/.config/py_wallpaper/config.json'
+        self.set_default_value()
         if in_args(["-c", "--conf"]): self.config_path = get_value_from_args(["-c", "--conf"])
+        if in_args(["-c", "--conf"]): self.config_path = get_value_from_args(["-c", "--conf"])
+        self.read_conf()
+        self.read_args()
+
+    def try_to_set(self, param: str, default_value: str|int|bool|list) -> str|int|bool|list:
+        try:
+            return self.config_data[param]
+        except Exception:
+            return default_value
+        
+    def set_default_value(self) -> None:
+        self.raw_displays_params   = [{'name': 'HDMI-A-1', 'width': 1920, 'height': 1080, 'margin-left': 1080, 'margin-top': 350}]
+        self.color_variables       = [{'name': '(color0)', 'value': 0}]
+        self.config_path           = f'{HOME}/.config/py_wallpaper/config.json'
+        self.template_config_dir   = f'{HOME}/.config/py_wallpaper/template.json'
+        self.wallpapers_dir        = f'{HOME}/Documents/Wallpapers'
+        self.cached_wallpapers_dir = f'{HOME}/Documents/CachedWallpapers'
+        self.wal_colors_dir        = f'{HOME}/.cache/wal/colors'
+        self.wal_backend           = 'wal'
+        self.wal_bg_color          = ''
+        self.swww_params           = '--transition-fps 165 --transition-step 10 --transition-duration 2 -f Nearest -t any'
+        self.sleep_time            = 360
+        self.light_theme           = False
+        self.resize_displays       = False
+        self.apply_templates       = True
+        self.use_pywal             = True
+    
+    def read_conf(self) -> None:
         with open(self.config_path) as file:
             self.config_data = json.loads(file.read())
 
-        self.raw_displays_params: dict = self.try_to_set("displays")
+        self.raw_displays_params   = self.try_to_set("displays", self.raw_displays_params)
+        self.color_variables       = self.try_to_set("color_variables", self.color_variables)
+        self.wallpapers_dir        = f"{HOME}".join(self.try_to_set("wallpapers_dir", self.wallpapers_dir).split("$(HOME)"))
+        self.cached_wallpapers_dir = f"{HOME}".join(self.try_to_set("cached_wallpapers_dir", self.cached_wallpapers_dir).split("$(HOME)"))
+        self.wal_colors_dir        = f"{HOME}".join(self.try_to_set("wal_colors_dir", self.wal_colors_dir).split("$(HOME)"))
+        self.template_config_dir   = f"{HOME}".join(self.try_to_set("template_config", self.template_config_dir).split("$(HOME)"))
+        self.wal_backend           = self.try_to_set("wal_backend", self.wal_backend)
+        self.wal_bg_color          = self.try_to_set("wal_bg_color", self.wal_bg_color)
+        self.swww_params           = self.try_to_set("swww_params", self.swww_params)
+        self.sleep_time            = int(self.try_to_set("sleep_time", self.sleep_time))
+        self.light_theme           = self.try_to_set("light_theme", self.light_theme)
+        self.resize_displays       = self.try_to_set("resize_displays", self.resize_displays)
+        self.apply_templates       = self.try_to_set("apply_templates", self.apply_templates)
+        self.use_pywal             = self.try_to_set("use_pywal", self.use_pywal)
 
-        self.color_variables: list[dict] = self.try_to_set("color_variables")
-
-        self.wallpapers_dir: str = f"{HOME}".join(self.try_to_set("wallpapers_dir").split("$(HOME)"))
-        self.cached_wallpapers_dir: str = f"{HOME}".join(self.try_to_set("cached_wallpapers_dir").split("$(HOME)"))
-        self.wal_colors_dir: str = f"{HOME}".join(self.try_to_set("wal_colors_dir").split("$(HOME)"))
-        self.template_config_dir: str = f"{HOME}".join(self.try_to_set("template_config").split("$(HOME)"))
-        self.wal_backend: str = self.try_to_set("wal_backend")
-        self.wal_bg_color: str = self.try_to_set("wal_bg_color")
-        self.swww_params: str = self.try_to_set("swww_params")
-        self.sleep_time: int = self.try_to_set("sleep_time")
-        self.light_theme: bool = self.try_to_set("light_theme")
-        self.resize_displays: bool = self.try_to_set("resize_displays")
-        self.apply_templates: bool = self.try_to_set("apply_templates")
-        self.use_pywal: bool = self.try_to_set("use_pywal")
-
-        self.read_args()
-
-    def try_to_set(self, param: str) -> any:
-        try:
-            return self.config_data[param]
-        except Exception as e:
-            return None
-    
     def read_args(self) -> None:
         once = False
         if in_args(["-wd", "--wallpaper-dir"]):          self.wallpapers_dir        = get_value_from_args(["-wd", "--wallpaper-dir"])
@@ -77,10 +96,7 @@ class Config(object):
         if in_args(["-s", "--sleep-time"]):              self.sleep_time            = int(get_value_from_args(["-s", "--sleep-time"]))
         if in_args(["-l", "--light"]):                   self.light_theme           = True
         if in_args(["--resize-displays"]):               self.resize_displays       = True
-        if in_args(["--cache-all"]):
-            for wallpaper_name in os.listdir(self.wallpapers_dir):
-                cache_wallpaper(wallpaper_name=wallpaper_name, wallpaper_path=f'{self.wallpapers_dir}/{wallpaper_name}')
-                sys.exit(1)
+        
         if in_args(["--once"]):
             once = True
         wallpaper_name = random.choice(os.listdir(self.wallpapers_dir))
@@ -91,9 +107,7 @@ class Config(object):
         self.once = once
         self.wallpaper_name = wallpaper_name
 
-
 CONFIG = Config()
-
 
 class Display(object):
     def __init__(self, name:str, width:int, height:int, margin_x:int=0, margin_y:int=0) -> None:
@@ -247,11 +261,38 @@ def split_wallpaper(displays: list[Display], image: Image) -> list[Display]:
     return displays
 
 
+def apply_templates() -> None:
+    templates: list[Template] = read_templates()
+
+    with open(f"{CONFIG.wal_colors_dir}") as file:
+        colors = (file.read()).split("\n")
+
+    for template in templates:
+        template.apply(colors)
+
+
+def change_colors(wallpaper_path:str) -> None:
+    if "\n" in wallpaper_path:
+        wallpaper_path = wallpaper_path[::-1][1::][::-1]
+    pywal_command: str = f"python -m pywal -n -e -q {'-l' if CONFIG.light_theme else ''} {"-b " + CONFIG.wal_bg_color if CONFIG.wal_bg_color else ""} -i {wallpaper_path} --backend {CONFIG.wal_backend} "
+
+    os.system(pywal_command)
+
+
+def get_cached_wallpaper_path(display, wallpaper_name: str):
+    return f'{CONFIG.cached_wallpapers_dir}/{display.name}-{display.w}.{display.h}.{display.x}.{display.y}{wallpaper_name.split('.')[0]}.png'
+
+
+def remove_invalid_cache(cached_wallpaper_path: str, cached_wallpaper_paths: list[str]):
+    if not cached_wallpaper_path in cached_wallpaper_paths:
+        os.remove(cached_wallpaper_path)
+
+
 def cache_wallpaper(wallpaper_path:str, wallpaper_name:str) -> None:
     cache_is_needed = False
 
     for display in read_displays():
-        if not os.path.exists(f'{CONFIG.cached_wallpapers_dir}/{display.name}-{display.w}.{display.h}.{display.x}.{display.y}{wallpaper_name.split('.')[0]}.png'):
+        if not os.path.exists(get_cached_wallpaper_path(display, wallpaper_name)):
             cache_is_needed = True
             break
 
@@ -269,28 +310,10 @@ def cache_wallpaper(wallpaper_path:str, wallpaper_name:str) -> None:
 
     for display in displays:
         display.image.save(
-            f'{CONFIG.cached_wallpapers_dir}/{display.name}-{display.w}.{display.h}.{display.x}.{display.y}{wallpaper_name.split('.')[0]}.png',
+            get_cached_wallpaper_path(display, wallpaper_name),
             optimize=True,
             quality=100,
         )
-
-
-def apply_templates() -> None:
-    templates: list[Template] = read_templates()
-
-    with open(f"{CONFIG.wal_colors_dir}") as file:
-        colors = (file.read()).split("\n")
-
-    for template in templates:
-        template.apply(colors)
-
-
-def change_colors(wallpaper_path:str) -> None:
-    if "\n" in wallpaper_path:
-        wallpaper_path = wallpaper_path[::-1][1::][::-1]
-    pywal_command: str = f"python -m pywal -n -e -q {'-l' if CONFIG.light_theme else ''} {"-b " + CONFIG.wal_bg_color if CONFIG.wal_bg_color else ""} -i {wallpaper_path} --backend {CONFIG.wal_backend} "
-
-    os.system(pywal_command)
 
 
 def set_wallpapper(wallpaper_path:str, wallpaper_name:str) -> None:
@@ -332,4 +355,19 @@ def main(wallpaper_name: str, once: bool) -> None:
 
 
 if __name__ == "__main__":
+    if in_args(["--cache-all"]):        
+        for wallpaper_name in os.listdir(CONFIG.wallpapers_dir):
+            cache_wallpaper(wallpaper_name=wallpaper_name, wallpaper_path=f'{CONFIG.wallpapers_dir}/{wallpaper_name}')
+
+        cached_wallpaper_paths = []
+        displays: list[Display] = read_displays()
+        for display in displays:
+            for wallpaper_name in os.listdir(CONFIG.wallpapers_dir):
+                cached_wallpaper_paths.append(get_cached_wallpaper_path(display, wallpaper_name))
+
+        for cached_wallpaper_name in os.listdir(CONFIG.cached_wallpapers_dir):
+            remove_invalid_cache(cached_wallpaper_path=f'{CONFIG.cached_wallpapers_dir}/{cached_wallpaper_name}', cached_wallpaper_paths=cached_wallpaper_paths)
+            
+        sys.exit(1)
+    
     main(wallpaper_name=CONFIG.wallpaper_name, once=CONFIG.once)
