@@ -19,7 +19,7 @@ def runrofi(wallpapers) -> list[str]:
         input="\n".join(wallpapers).encode(),
         stdout=subprocess.PIPE,
     )
-    return result.stdout.decode()
+    return result.stdout.decode()[::-1][1::][::-1]
 
 def in_args(params: list[str]) -> bool:
     for param in params:
