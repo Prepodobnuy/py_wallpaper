@@ -79,18 +79,10 @@
     {
       "name": "(color15)",
       "value": 15
-    },
-    {
-      "name": "(primarycolor)",
-      "value": 6
-    },
-    {
-      "name": "(bgcolor)",
-      "value": 1
     }
   ],
   "wallpapers_dir": "$(HOME)/Documents/Wallpapers",
-  "cached_wallpapers_dir": "$(HOME)/Documents/CachedWallpapers",
+  "cached_wallpapers_dir": "$(HOME)/.cache/py_wallpaper/Wallpapers",
   "template_config": "$(HOME)/.config/py_wallpaper/templates.json",
   "wal_colors_dir": "$(HOME)/.cache/wal/colors",
   "wal_backend": "wal",

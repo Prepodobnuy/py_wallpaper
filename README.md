@@ -10,6 +10,8 @@ chmod +X dist/py_wallpaper
 sudo rm /usr/bin/py_wallpaper
 sudo mv dist/py_wallpaper /usr/bin/py_wallpaper
 mkdir ~/.config/py_wallpaper
+mkdir ~/.cache/py_wallpaper
+mkdir ~/.cache/py_wallpaper/Wallpapers
 mv config.json ~/.config/py_wallpaper/config.json
 mv templates.json ~/.config/py_wallpaper/templates.json
 cd ..
@@ -17,19 +19,19 @@ rm -rf py_wallpaper
 ```
 
 ## Dependencies
-Primary:
+- Primary:
 ```bash
 pywal 
 ```
-Secondary:
+- Secondary:
 ```bash
 rofi
 ```
-Xorg:
+- Xorg:
 ```bash
 feh 
 ```
-Wayland:
+- Wayland:
 ```bash
 swww
 ```

@@ -10,43 +10,10 @@ from PIL import Image
 
 
 HOME = os.getenv("HOME")
-DEBUG = False
-
-
-def runrofi(wallpapers) -> list[str]:
-    result = subprocess.run(
-        ["rofi", "-dmenu", "-p"],
-        input="\n".join(wallpapers).encode(),
-        stdout=subprocess.PIPE,
-    )
-    return result.stdout.decode()[::-1][1::][::-1]
-
-def in_args(params: list[str]) -> bool:
-    for param in params:
-        if param in sys.argv:
-            return True
-    return False
-
-def get_value_from_args(params: list[str]) -> str | None:
-    for param in params:
-        if param in sys.argv:
-            return sys.argv[sys.argv.index(param) + 1]
-    return None
-
 
 class Config(object):
     def __init__(self) -> None:
         self.set_default_value()
-        if in_args(["-c", "--conf"]): self.config_path = get_value_from_args(["-c", "--conf"])
-        if in_args(["-c", "--conf"]): self.config_path = get_value_from_args(["-c", "--conf"])
-        self.read_conf()
-        self.read_args()
-
-    def try_to_set(self, param: str, default_value: str|int|bool|list) -> str|int|bool|list:
-        try:
-            return self.config_data[param]
-        except Exception:
-            return default_value
         
     def set_default_value(self) -> None:
         self.raw_displays_params   = [{'name': 'HDMI-A-1', 'width': 1920, 'height': 1080, 'margin-left': 1080, 'margin-top': 350}]
@@ -66,46 +33,29 @@ class Config(object):
         self.use_pywal             = True
     
     def read_conf(self) -> None:
+        def try_to_set(param: str, default_value: str|int|bool|list) -> str|int|bool|list:
+            try:
+                return self.config_data[param]
+            except Exception:
+                return default_value
+            
         with open(self.config_path) as file:
             self.config_data = json.loads(file.read())
 
-        self.raw_displays_params   = self.try_to_set("displays", self.raw_displays_params)
-        self.color_variables       = self.try_to_set("color_variables", self.color_variables)
-        self.wallpapers_dir        = f"{HOME}".join(self.try_to_set("wallpapers_dir", self.wallpapers_dir).split("$(HOME)"))
-        self.cached_wallpapers_dir = f"{HOME}".join(self.try_to_set("cached_wallpapers_dir", self.cached_wallpapers_dir).split("$(HOME)"))
-        self.wal_colors_dir        = f"{HOME}".join(self.try_to_set("wal_colors_dir", self.wal_colors_dir).split("$(HOME)"))
-        self.template_config_dir   = f"{HOME}".join(self.try_to_set("template_config", self.template_config_dir).split("$(HOME)"))
-        self.wal_backend           = self.try_to_set("wal_backend", self.wal_backend)
-        self.wal_bg_color          = self.try_to_set("wal_bg_color", self.wal_bg_color)
-        self.swww_params           = self.try_to_set("swww_params", self.swww_params)
-        self.sleep_time            = int(self.try_to_set("sleep_time", self.sleep_time))
-        self.light_theme           = self.try_to_set("light_theme", self.light_theme)
-        self.resize_displays       = self.try_to_set("resize_displays", self.resize_displays)
-        self.apply_templates       = self.try_to_set("apply_templates", self.apply_templates)
-        self.use_pywal             = self.try_to_set("use_pywal", self.use_pywal)
-
-    def read_args(self) -> None:
-        once = False
-        if in_args(["-wd", "--wallpaper-dir"]):          self.wallpapers_dir        = get_value_from_args(["-wd", "--wallpaper-dir"])
-        if in_args(["-cwd", "--cached-wallpaper-dir"]):  self.cached_wallpapers_dir = get_value_from_args(["-cwd", "--cached-wallpaper-dir"])
-        if in_args(["-pcd", "--pywal-colors-dir"]):      self.wal_colors_dir        = get_value_from_args(["-pcd", "--pywal-colors-dir"])
-        if in_args(["-t", "--temp"]):                    self.template_config_dir   = get_value_from_args(["-t", "--temp"])
-        if in_args(["-pb", "--pywal-backend"]):          self.wal_backend           = get_value_from_args(["-pb", "--pywal-backend"])
-        if in_args(["-pbc", "--pywal-backgroundcolor"]): self.wal_bg_color          = get_value_from_args(["-pbc", "--pywal-backgroundcolor"])
-        if in_args(["--swww"]):                          self.swww_params           = get_value_from_args(["--swww"])
-        if in_args(["-s", "--sleep-time"]):              self.sleep_time            = int(get_value_from_args(["-s", "--sleep-time"]))
-        if in_args(["-l", "--light"]):                   self.light_theme           = True
-        if in_args(["--resize-displays"]):               self.resize_displays       = True
-        
-        if in_args(["--once"]):
-            once = True
-        wallpaper_name = random.choice(os.listdir(self.wallpapers_dir))
-        if in_args(["-r", "--rofi"]):
-            wallpaper_name = runrofi(os.listdir(self.wallpapers_dir))
-            once = True
-
-        self.once = once
-        self.wallpaper_name = wallpaper_name
+        self.raw_displays_params   = try_to_set("displays", self.raw_displays_params)
+        self.color_variables       = try_to_set("color_variables", self.color_variables)
+        self.wallpapers_dir        = f"{HOME}".join(try_to_set("wallpapers_dir", self.wallpapers_dir).split("$(HOME)"))
+        self.cached_wallpapers_dir = f"{HOME}".join(try_to_set("cached_wallpapers_dir", self.cached_wallpapers_dir).split("$(HOME)"))
+        self.wal_colors_dir        = f"{HOME}".join(try_to_set("wal_colors_dir", self.wal_colors_dir).split("$(HOME)"))
+        self.template_config_dir   = f"{HOME}".join(try_to_set("template_config", self.template_config_dir).split("$(HOME)"))
+        self.wal_backend           = try_to_set("wal_backend", self.wal_backend)
+        self.wal_bg_color          = try_to_set("wal_bg_color", self.wal_bg_color)
+        self.swww_params           = try_to_set("swww_params", self.swww_params)
+        self.sleep_time            = int(try_to_set("sleep_time", self.sleep_time))
+        self.light_theme           = try_to_set("light_theme", self.light_theme)
+        self.resize_displays       = try_to_set("resize_displays", self.resize_displays)
+        self.apply_templates       = try_to_set("apply_templates", self.apply_templates)
+        self.use_pywal             = try_to_set("use_pywal", self.use_pywal)
 
 CONFIG = Config()
 
@@ -129,7 +79,6 @@ class Display(object):
         for display in displays:
             res = display.h + display.y if display.h + display.y > res else res
         return res
-
 
 class Template(object):
     def __init__(self, templatepath:str, configfilepath:str, usequotes:bool=False, usesharps:bool=False, command:str=None, opacity:str="") -> None:
@@ -167,7 +116,6 @@ class Template(object):
         if self.executeAfter != None:
             os.popen(self.executeAfter)
 
-
 def read_templates() -> list[Template]:
     res: list[Template] = []
 
@@ -187,7 +135,6 @@ def read_templates() -> list[Template]:
 
     return res
 
-
 def read_displays() -> list[Display]:
     res: list[Display] = []
 
@@ -202,7 +149,6 @@ def read_displays() -> list[Display]:
         res.append(tmp)
 
     return res
-
 
 def resize_displays(displays: list[Display], image: Image) -> list[Display]:
     width, height = image.size
@@ -228,7 +174,6 @@ def resize_displays(displays: list[Display], image: Image) -> list[Display]:
 
     return displays
 
-
 def resize_wallpaper(displays: list[Display], image: Image) -> Image:
     width, height = image.size
     max_width = Display.max_width(displays)
@@ -251,7 +196,6 @@ def resize_wallpaper(displays: list[Display], image: Image) -> Image:
 
     return image
 
-
 def split_wallpaper(displays: list[Display], image: Image) -> list[Display]:
     for display in displays:
         display.image = image.crop(
@@ -259,7 +203,6 @@ def split_wallpaper(displays: list[Display], image: Image) -> list[Display]:
         )
 
     return displays
-
 
 def apply_templates() -> None:
     templates: list[Template] = read_templates()
@@ -270,7 +213,6 @@ def apply_templates() -> None:
     for template in templates:
         template.apply(colors)
 
-
 def change_colors(wallpaper_path:str) -> None:
     if "\n" in wallpaper_path:
         wallpaper_path = wallpaper_path[::-1][1::][::-1]
@@ -278,15 +220,12 @@ def change_colors(wallpaper_path:str) -> None:
 
     os.system(pywal_command)
 
-
 def get_cached_wallpaper_path(display, wallpaper_name: str):
     return f'{CONFIG.cached_wallpapers_dir}/{display.name}-{display.w}.{display.h}.{display.x}.{display.y}{wallpaper_name.split('.')[0]}.png'
-
 
 def remove_invalid_cache(cached_wallpaper_path: str, cached_wallpaper_paths: list[str]):
     if not cached_wallpaper_path in cached_wallpaper_paths:
         os.remove(cached_wallpaper_path)
-
 
 def cache_wallpaper(wallpaper_path:str, wallpaper_name:str) -> None:
     cache_is_needed = False
@@ -315,7 +254,6 @@ def cache_wallpaper(wallpaper_path:str, wallpaper_name:str) -> None:
             quality=100,
         )
 
-
 def set_wallpapper(wallpaper_path:str, wallpaper_name:str) -> None:
     displays: list[Display] = read_displays()
 
@@ -329,7 +267,6 @@ def set_wallpapper(wallpaper_path:str, wallpaper_name:str) -> None:
 
         if xorg: break
     
-
 def main(wallpaper_name: str, once: bool) -> None:
     prev_wallpaper_name = None
 
@@ -355,6 +292,61 @@ def main(wallpaper_name: str, once: bool) -> None:
 
 
 if __name__ == "__main__":
+
+    def in_args(params: list[str]) -> bool:
+        for param in params:
+            if param in sys.argv:
+                return True
+        return False
+
+    def get_value_from_args(params: list[str]) -> str | None:
+        for param in params:
+            if param in sys.argv:
+                return sys.argv[sys.argv.index(param) + 1]
+        return None
+    
+    def runrofi(wallpapers) -> list[str]:
+        result = subprocess.run(
+            ["rofi", "-dmenu", "-p"],
+            input="\n".join(wallpapers).encode(),
+            stdout=subprocess.PIPE,
+        )
+        if '\n' in result.stdout.decode():
+            return result.stdout.decode()[::-1][1::][::-1]
+        return result.stdout.decode()
+
+    once = False
+    if in_args(["-c", "--conf"]):                    
+        CONFIG.config_path = get_value_from_args(["-c", "--conf"]) 
+    CONFIG.read_conf()
+    if in_args(["-wd", "--wallpaper-dir"]):          
+        CONFIG.wallpapers_dir = get_value_from_args(["-wd", "--wallpaper-dir"])
+    if in_args(["-cwd", "--cached-wallpaper-dir"]):  
+        CONFIG.cached_wallpapers_dir = get_value_from_args(["-cwd", "--cached-wallpaper-dir"])
+    if in_args(["-pcd", "--pywal-colors-dir"]):      
+        CONFIG.wal_colors_dir = get_value_from_args(["-pcd", "--pywal-colors-dir"])
+    if in_args(["-t", "--temp"]):                    
+        CONFIG.template_config_dir = get_value_from_args(["-t", "--temp"])
+    if in_args(["-pb", "--pywal-backend"]):          
+        CONFIG.wal_backend = get_value_from_args(["-pb", "--pywal-backend"])
+    if in_args(["-pbc", "--pywal-backgroundcolor"]): 
+        CONFIG.wal_bg_color = get_value_from_args(["-pbc", "--pywal-backgroundcolor"])
+    if in_args(["--swww"]):                          
+        CONFIG.swww_params = get_value_from_args(["--swww"])
+    if in_args(["-s", "--sleep-time"]):              
+        CONFIG.sleep_time = int(get_value_from_args(["-s", "--sleep-time"]))
+    if in_args(["-l", "--light"]):                   
+        CONFIG.light_theme = True
+    if in_args(["--resize-displays"]):               
+        CONFIG.resize_displays = True    
+    if in_args(["-o","--once"]): 
+        once = True
+
+    wallpaper_name = random.choice(os.listdir(CONFIG.wallpapers_dir))
+    if in_args(["-r", "--rofi"]):
+        wallpaper_name = runrofi(os.listdir(CONFIG.wallpapers_dir))
+        once = True
+
     if in_args(["--cache-all"]):        
         for wallpaper_name in os.listdir(CONFIG.wallpapers_dir):
             cache_wallpaper(wallpaper_name=wallpaper_name, wallpaper_path=f'{CONFIG.wallpapers_dir}/{wallpaper_name}')
@@ -370,4 +362,4 @@ if __name__ == "__main__":
             
         sys.exit(1)
     
-    main(wallpaper_name=CONFIG.wallpaper_name, once=CONFIG.once)
+    main(wallpaper_name=wallpaper_name, once=once)
