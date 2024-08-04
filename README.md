@@ -1,3 +1,4 @@
+# Use [rpaper](https://github.com/Prepodobnuy/rpaper) instead.
 ## Installation
 ```bash
 git clone https://github.com/Prepodobnuy/py_wallpaper.git
